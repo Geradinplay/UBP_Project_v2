@@ -90,7 +90,7 @@ public class Menu {
 	    }
 	    private void headquartersMenu(){
 	    	while (true) {
-	            System.out.println("/n--- Headquarters Menu ---");
+	            System.out.println("--- Headquarters Menu ---");
 	            System.out.println("1. Insert headquarter");   
 	            System.out.println("2. Update headquarter"); 
 	            System.out.println("3. Show headquarter");   
@@ -114,14 +114,30 @@ public class Menu {
 
 	                case 2: 
 	                    System.out.println("\n--- Update Cinema ---");
-	                    db.showAllHeadquarters(); 
-	                    System.out.print("Enter the ID of the headquarter to update: ");
-	                    int cinemaId = scan.nextInt();
-	                    scan.nextLine(); 
-	                    System.out.print("Enter new cinema name: ");
-	                    String newName = scan.nextLine();
-
-	                    boolean isUpdated = db.updateHeadquarters(cinemaId, newName);
+	                    int idHd=0;
+	                    System.out.print("Enter cinema name: ");
+	                    String nameSc = scan.nextLine();
+	                    List<Headquarters>headquarters=db.findHeadquartersByName(nameSc);
+	                    if(headquarters.isEmpty()) {
+	                    	System.out.println("Error: name not found!");
+	                    	break;
+	                    }
+	                    switch (headquarters.size()) {
+	           	     case 1:
+	           	             idHd=headquarters.get(0).getHeadquartersId();
+	           	             break;
+	           	     default:
+	           	      for (Headquarters c : headquarters) {
+	           	        System.out.println(c);
+	           	      }
+	           	      System.out.print("Select your cinema(id): ");
+	           	        idHd = scan.nextInt();
+	           	        scan.nextLine();
+	           	        break;
+	           	    }
+	                    System.out.println("Enter new name: ");
+	                    String hdName=scan.nextLine();
+	                    boolean isUpdated = db.updateHeadquarters(idHd, hdName);
 	                    if (isUpdated) {
 	                        System.out.println("Headquarters updated successfully!");
 	                    } else {
@@ -130,24 +146,40 @@ public class Menu {
 	                    break;
 
 	                case 3: 
-	                    System.out.println("\n--- List of Cinemas ---");
+	                    System.out.println("\n--- List of Headquarters ---");
 	                    db.showAllHeadquarters();
 	                    break;
 
 	                case 4: 
-	                    System.out.println("\n--- Delete Cinema ---");
-	                    db.showAllHeadquarters(); 
-	                    System.out.print("Enter the ID of the cinema to delete: ");
-	                    int id = scan.nextInt();
-
-	                    boolean isDeleted = db.deleteHeadquarters(id);
+	                    System.out.println("\n--- Delete Headquarters ---");
+	                    System.out.print("Enter the cinema name: ");
+	                    String deleteName = scan.nextLine();
+	                    List<Headquarters>headquartersDel=db.findHeadquartersByName(deleteName);
+	                    int idHdDel=0;
+	                    if(headquartersDel.isEmpty()) {
+	                    	System.out.println("Error: name not found!");
+	                    	break;
+	                    }
+	                    switch (headquartersDel.size()) {
+	           	     case 1:
+	           	    	idHdDel=headquartersDel.get(0).getHeadquartersId();
+	           	             break;
+	           	     default:
+	           	      for (Headquarters c : headquartersDel) {
+	           	        System.out.println(c);
+	           	      }
+	           	      System.out.print("Select your cinema(id): ");
+	           	   idHdDel = scan.nextInt();
+	           	        scan.nextLine();
+	           	        break;
+	           	    }
+	                    boolean isDeleted = db.deleteHeadquarters(idHdDel);
 	                    if (isDeleted) {
 	                        System.out.println("Headquarters deleted successfully!");
 	                    } else {
 	                        System.out.println("Failed to delete headquarters.");
-	                    }
+	                        }
 	                    break;
-
 	                case 5: 
 	                    return;
 
@@ -325,11 +357,11 @@ public class Menu {
 
 	                case 2: 
 	                    System.out.println("\n--- Update Cinema ---");
-//	                    db.showAllCinemas(); 
+
 	                   int idCm=0;
 	                    System.out.print("Enter cinema name: ");
 	                    String nameSc = scan.nextLine();
-	                    List<Cinema>cinemas=db.findByNameCinema(nameSc);
+	                    List<Cinema>cinemas=db.findCinemaByName(nameSc);
 	                    if(cinemas.isEmpty()) {
 	                    	System.out.println("Error: name not found!");
 	                    	break;
@@ -375,7 +407,7 @@ public class Menu {
 //	                    db.showAllCinemas(); 
 	                    System.out.print("Enter the cinema name: ");
 	                    String deleteName = scan.nextLine();
-	                    List<Cinema>cinemasDel=db.findByNameCinema(deleteName);
+	                    List<Cinema>cinemasDel=db.findCinemaByName(deleteName);
 	                    int idCmDel=0;
 	                    if(cinemasDel.isEmpty()) {
 	                    	System.out.println("Error: name not found!");
@@ -426,14 +458,31 @@ public class Menu {
 	            switch (choice) {
 	                case 1: 
 	                    System.out.print("Enter studio name: ");
-	                    String name = scan.nextLine();
+	                    String newStudioIn = scan.nextLine();
+	                    db.showAllHeadquarters();
+	                    System.out.print("Enter headquarters name: ");
+	                    String newheadquartersIn = scan.nextLine();
+	                    List<Headquarters>headquartersForeignIn=db.findHeadquartersByName(newheadquartersIn);
+	                    int idStIn=0;
+	                    if(headquartersForeignIn.isEmpty()) {
+	                    	System.out.println("Error: name not found!");
+	                    	break;
+	                    }
+	                    switch (headquartersForeignIn.size()) {
+	           	     case 1:
+	           	    	idStIn=headquartersForeignIn.get(0).getHeadquartersId();
+	           	             break;
+	           	     default:
+	           	      for (Headquarters c : headquartersForeignIn) {
+	           	        System.out.println(c);
+	           	      }
+	           	      System.out.print("Select your studio(id): ");
+	           	        idStIn = scan.nextInt();
+	           	        scan.nextLine();
+	           	        break;
+	           	    }
 
-	                    System.out.println("\n--- Available Headquarters ---");
-	                    db.showAllHeadquarters(); 
-	                    System.out.print("Enter headquarters ID: ");
-	                    int headquartersId = scan.nextInt();
-
-	                    boolean isAdded = db.insertStudio(name, headquartersId);
+	                    boolean isAdded = db.insertStudio(newStudioIn, idStIn);
 	                    if (isAdded) {
 	                        System.out.println("Studio added successfully!");
 	                    } else {
@@ -442,20 +491,59 @@ public class Menu {
 	                    break;
 
 	                case 2:
-	                    System.out.println("\n--- Update Studio ---");
-	                    db.showAllStudios(); 
-	                    System.out.print("Enter the ID of the studio to update: ");
-	                    int studioId = scan.nextInt();
-	                    scan.nextLine();
-	                    System.out.print("Enter new studio name: ");
+	                	 System.out.println("\n--- Update Studio ---");
+	                	  int idStUp=0;
+		                    System.out.print("Enter studio name: ");
+		                    String nameSt = scan.nextLine();
+		                    List<Studio>studios=db.findStudioByName(nameSt);
+		                    if(studios.isEmpty()) {
+		                    	System.out.println("Error: name not found!");
+		                    	break;
+		                    }
+		                    switch (studios.size()) {
+		           	     case 1:
+		           	             idStUp=studios.get(0).getStudioId();
+		           	             break;
+		           	     default:
+		           	      for (Studio c : studios) {
+		           	        System.out.println(c);
+		           	      }
+		           	      System.out.print("Select your studio(id): ");
+		           	        idStUp=scan.nextInt();
+		           	        scan.nextLine();
+		           	        break;
+		           	    }
+		                    
+	                	
+	                	System.out.print("Enter new studio name: ");
 	                    String newName = scan.nextLine();
-
+	                	List<Headquarters> headquarters=db.findHeadquartersByName(newName);//todo
 	                    System.out.println("\n--- Available Headquarters ---");
 	                    db.showAllHeadquarters(); 
-	                    System.out.print("Enter new headquarters ID: ");
-	                    int newHeadquartersId = scan.nextInt();
+	                    
+	                    System.out.print("Enter new headquarters name: ");
+	                    int idStF=0;
+	                    String newHeadquarters = scan.nextLine();
+	                    List<Headquarters>headquartersForeign=db.findHeadquartersByName(newHeadquarters);
+	                    if(headquartersForeign.isEmpty()) {
+	                    	System.out.println("Error: name not found!");
+	                    	break;
+	                    }
+	                    switch (headquartersForeign.size()) {
+	           	     case 1:
+	           	             idStF=headquartersForeign.get(0).getHeadquartersId();
+	           	             break;
+	           	     default:
+	           	      for (Headquarters c : headquartersForeign) {
+	           	        System.out.println(c);
+	           	      }
+	           	      System.out.print("Select your cinema(id): ");
+	           	        idStF = scan.nextInt();
+	           	        scan.nextLine();
+	           	        break;
+	           	    }
 
-	                    boolean isUpdated = db.updateStudio(studioId, newName, newHeadquartersId);
+	                    boolean isUpdated = db.updateStudio(idStUp, newName, idStF);
 	                    if (isUpdated) {
 	                        System.out.println("Studio updated successfully!");
 	                    } else {
@@ -470,11 +558,30 @@ public class Menu {
 
 	                case 4: 
 	                    System.out.println("\n--- Delete Studio ---");
-	                    db.showAllStudios(); 
-	                    System.out.print("Enter the ID of the studio to delete: ");
-	                    int deleteId = scan.nextInt();
+//	                    db.showAllStudios(); 
+	                    int idStDel=0;
+	                    System.out.print("Enter studio name: ");
+	                    String nameStDel = scan.nextLine();
+	                    List<Studio>studiosDel=db.findStudioByName(nameStDel);
+	                    if(studiosDel.isEmpty()) {
+	                    	System.out.println("Error: name not found!");
+	                    	break;
+	                    }
+	                    switch (studiosDel.size()) {
+	           	     case 1:
+	           	             idStDel=studiosDel.get(0).getStudioId();
+	           	             break;
+	           	     default:
+	           	      for (Studio c : studiosDel) {
+	           	        System.out.println(c);
+	           	      }
+	           	      System.out.print("Select your studio(id): ");
+	           	        idStDel=scan.nextInt();
+	           	        scan.nextLine();
+	           	        break;
+	           	    }
 
-	                    boolean isDeleted = db.deleteStudio(deleteId);
+	                    boolean isDeleted = db.deleteStudio(idStDel);
 	                    if (isDeleted) {
 	                        System.out.println("Studio deleted successfully!");
 	                    } else {
@@ -497,86 +604,284 @@ public class Menu {
 	            System.out.println("2. Update Film");
 	            System.out.println("3. Show Films");
 	            System.out.println("4. Delete Film");
-	            System.out.println("5. Show all films with special events");
-	            System.out.println("6. Back to Main Menu");
+	            System.out.println("5. add event");
+	            System.out.println("6. remove event");	            
+	            System.out.println("7. Show all films with special events");
+	            System.out.println("8. Back to Main Menu");
 	            System.out.print("Enter your choice: ");
 
 	            int choice = scan.nextInt();
 	            scan.nextLine(); 
 	            switch (choice) {
 	                case 1:
-	                    System.out.print("Enter film title: ");
-	                    String title = scan.nextLine();
-	                    System.out.print("Enter film genre: ");
-	                    String genre = scan.nextLine();
-	                    System.out.print("Enter film duration (in minutes): ");
-	                    int duration = scan.nextInt();
-	                    scan.nextLine();
-	                    System.out.println("Enter film director: ");
-	                    String director = scan.nextLine();
-	                    db.showAllStudios();
-	                    System.out.print("Enter studio ID: ");
-	                    int studioId = scan.nextInt();
+	                	System.out.print("Enter film title: ");
+	                	String title = scan.nextLine();
 
-	                    boolean isAdded = db.insertFilm(title, genre, duration, director, studioId);
-	                    if (isAdded) {
-	                        System.out.println("Film inserted successfully!");
-	                    } else {
-	                        System.out.println("Failed to insert film.");
-	                    }
-	                    break;
+	                	System.out.print("Enter film genre: ");
+	                	String genre = scan.nextLine();
+
+	                	System.out.print("Enter film duration (in minutes): ");
+	                	int duration = scan.nextInt();
+	                	scan.nextLine(); // Очищаем буфер
+
+	                	System.out.print("Enter film director: ");
+	                	String director = scan.nextLine();
+	                	db.showAllStudios();
+	                	System.out.print("Enter studio name: ");
+	                	String studioName = scan.nextLine();
+	                	List<Studio> studios = db.findStudioByName(studioName);
+
+	                	int studioId = 0;
+	                	if (studios.isEmpty()) {
+	                	    System.out.println("Error: Studio name not found!");
+	                	    break;
+	                	}
+
+	                	if (studios.size() == 1) {
+	                	    studioId = studios.get(0).getStudioId();
+	                	} else {
+	                	    for (int i = 0; i < studios.size(); i++) {
+	                	        System.out.println(studios.get(i));
+	                	    }
+	                	    System.out.print("Select studio ID: ");
+	                	    studioId = scan.nextInt();
+	                	    scan.nextLine();
+	                	}
+
+	                	boolean isAdded = db.insertFilm(title, genre, duration, director, studioId);
+	                	if (isAdded) {
+	                	    System.out.println("Film inserted successfully!");
+	                	} else {
+	                	    System.out.println("Failed to insert film.");
+	                	}
+	                	break;
+
 
 	                case 2:
-	                    System.out.println("\n--- Update Film ---");
-	                    db.showAllFilms();
-	                    System.out.print("Enter the ID of the film to update: ");
-	                    int filmId = scan.nextInt();
-	                    scan.nextLine();
-	                    System.out.print("Enter new film title: ");
-	                    String newTitle = scan.nextLine();
-	                    System.out.print("Enter new film genre: ");
-	                    String newGenre = scan.nextLine();
-	                    System.out.print("Enter new film duration (in minutes): ");
-	                    int newDuration = scan.nextInt();
-	                    scan.nextLine();
-	                    System.out.print("Enter new film director: ");
-	                    String newDirector = scan.nextLine();
-	                    db.showAllStudios();
-	                    System.out.print("Enter new studio ID: ");
-	                    int newStudioId = scan.nextInt(); 
+	                	System.out.println("\n--- Update Film ---");
+	                	db.showAllFilms();
 
-	                    boolean isUpdated = db.updateFilm(filmId, newTitle, newGenre, newDuration, newDirector, newStudioId);
-	                    if (isUpdated) {
-	                        System.out.println("Film updated successfully!");
-	                    } else {
-	                        System.out.println("Failed to update film.");
-	                    }
-	                    break;
+	                	System.out.print("Enter the current film title: ");
+	                	String currentTitle = scan.nextLine();
+	                	List<Film> films = db.findFilmByTitle(currentTitle);
+
+	                	int filmId = 0;
+	                	if (films.isEmpty()) {
+	                	    System.out.println("Error: Film title not found!");
+	                	    break;
+	                	}
+
+	                	if (films.size() == 1) {
+	                	    filmId = films.get(0).getFilmId();
+	                	} else {
+	                	    for (int i = 0; i < films.size(); i++) {
+	                	        System.out.println(films.get(i));
+	                	    }
+	                	    System.out.print("Select film ID: ");
+	                	    filmId = scan.nextInt();
+	                	    scan.nextLine();
+	                	}
+
+	                	System.out.print("Enter new film title: ");
+	                	String newTitle = scan.nextLine();
+
+	                	System.out.print("Enter new film genre: ");
+	                	String newGenre = scan.nextLine();
+
+	                	System.out.print("Enter new film duration (in minutes): ");
+	                	int newDuration = scan.nextInt();
+	                	scan.nextLine();
+
+	                	System.out.print("Enter new film director: ");
+	                	String newDirector = scan.nextLine();
+	                	
+	                	db.showAllStudios();
+	                	System.out.print("Enter new studio name: ");
+	                	String newStudioName = scan.nextLine();
+	                	List<Studio> studiosFilm = db.findStudioByName(newStudioName);
+
+	                	int newStudioId = 0;
+	                	if (studiosFilm.isEmpty()) {
+	                	    System.out.println("Error: Studio name not found!");
+	                	    break;
+	                	}
+
+	                	if (studiosFilm.size() == 1) {
+	                	    newStudioId = studiosFilm.get(0).getStudioId();
+	                	} else {
+	                	    for (int i = 0; i < studiosFilm.size(); i++) {
+	                	        System.out.println(studiosFilm.get(i));
+	                	    }
+	                	    System.out.print("Select studio ID: ");
+	                	    newStudioId = scan.nextInt();
+	                	    scan.nextLine();
+	                	}
+
+	                	boolean isUpdated = db.updateFilm(filmId, newTitle, newGenre, newDuration, newDirector, newStudioId);
+	                	if (isUpdated) {
+	                	    System.out.println("Film updated successfully!");
+	                	} else {
+	                	    System.out.println("Failed to update film.");
+	                	}
+	                	break;
+
 
 	                case 3:
 	                    System.out.println("\n--- List of Films ---");
-	                    db.showAllFilms();
+	                    db.showAllFilmsWithStudioName();
 	                    break;
 
 	                case 4:
-	                    System.out.println("\n--- Delete Film ---");
-	                    db.showAllFilms();
-	                    System.out.print("Enter the ID of the film to delete: ");
-	                    int deleteFilmId = scan.nextInt();
+	                	System.out.println("\n--- Delete Film ---");
+	                	db.showAllFilms();
 
-	                    boolean isDeleted = db.deleteFilm(deleteFilmId);
-	                    if (isDeleted) {
-	                        System.out.println("Film deleted successfully!");
+	                	System.out.print("Enter the title of the film to delete: ");
+	                	String filmTitleToDelete = scan.nextLine();
+	                	List<Film> filmsDel = db.findFilmByTitle(filmTitleToDelete);
+
+	                	int deleteFilmId = 0;
+	                	if (filmsDel.isEmpty()) {
+	                	    System.out.println("Error: Film title not found!");
+	                	    break;
+	                	}
+
+	                	if (filmsDel.size() == 1) {
+	                	    deleteFilmId = filmsDel.get(0).getFilmId();
+	                	} else {
+	                	    for (int i = 0; i < filmsDel.size(); i++) {
+	                	        System.out.println(filmsDel.get(i));
+	                	    }
+	                	    System.out.print("Select film ID to delete: ");
+	                	    deleteFilmId = scan.nextInt();
+	                	    scan.nextLine();
+	                	}
+
+	                	boolean deletionSuccess = db.deleteFilm(deleteFilmId);
+	                	if (deletionSuccess) {
+	                	    System.out.println("Film deleted successfully!");
+	                	} else {
+	                	    System.out.println("Failed to delete film.");
+	                	}
+	                	break;
+
+
+	                case 5: 
+	                    System.out.println("\n--- Add Event to Film ---");
+
+	                    db.showAllSpecialEvents();
+	                    System.out.print("Enter special event name: ");
+	                    String eventName = scan.nextLine();
+	                    List<SpecialEvent> eventList = db.findSpecialEventByName(eventName);
+
+	                    int eventId = 0;
+	                    if (eventList.isEmpty()) {
+	                        System.out.println("Error: Event name not found!");
+	                        break;
+	                    }
+	                    
+	                    if (eventList.size() == 1) {
+	                        eventId = eventList.get(0).getEventId();
 	                    } else {
-	                        System.out.println("Failed to delete film.");
+	                        for (int i = 0; i < eventList.size(); i++) {
+	                            System.out.println(eventList.get(i));
+	                        }
+	                        System.out.print("Select event ID: ");
+	                        eventId = scan.nextInt();
+	                        scan.nextLine();
+	                    }
+
+	                    db.showAllFilms();
+	                    System.out.print("Enter film title: ");
+	                    String filmTitle = scan.nextLine();
+	                    List<Film> filmList = db.findFilmByTitle(filmTitle);
+
+	                    int filmIdEF = 0;
+	                    if (filmList.isEmpty()) {
+	                        System.out.println("Error: Film title not found!");
+	                        break;
+	                    }
+	                    
+	                    if (filmList.size() == 1) {
+	                        filmIdEF = filmList.get(0).getFilmId();
+	                    } else {
+	                        for (int i = 0; i < filmList.size(); i++) {
+	                            System.out.println(filmList.get(i));
+	                        }
+	                        System.out.print("Select film ID: ");
+	                        filmIdEF = scan.nextInt();
+	                        scan.nextLine();
+	                    }
+
+	                    boolean insertionSuccess = db.insertEventToFilm(eventId, filmIdEF);
+	                    if (insertionSuccess) {
+	                        System.out.println("Event linked to film successfully!");
+	                    } else {
+	                        System.out.println("Failed to link event to film.");
 	                    }
 	                    break;
 
-	                case 5:
+	                case 6: 
+	                    System.out.println("\n--- Remove Event from Film ---");
+
+	                    db.showAllSpecialEvents();
+	                    System.out.print("Enter special event name: ");
+	                    String eventNameToDelete = scan.nextLine();
+	                    List<SpecialEvent> eventListToDelete = db.findSpecialEventByName(eventNameToDelete);
+
+	                    int eventIdToDelete = 0;
+	                    if (eventListToDelete.isEmpty()) {
+	                        System.out.println("Error: Event name not found!");
+	                        break;
+	                    }
+	                    
+	                    if (eventListToDelete.size() == 1) {
+	                        eventIdToDelete = eventListToDelete.get(0).getEventId();
+	                    } else {
+	                        for (int i = 0; i < eventListToDelete.size(); i++) {
+	                            System.out.println(eventListToDelete.get(i));
+	                        }
+	                        System.out.print("Select event ID: ");
+	                        eventIdToDelete = scan.nextInt();
+	                        scan.nextLine();
+	                    }
+
+	                    db.showAllFilms();
+	                    System.out.print("Enter film title: ");
+	                    String filmTitleToDel = scan.nextLine();
+	                    List<Film> filmListToDelete = db.findFilmByTitle(filmTitleToDel);
+
+	                    int filmIdEFToDel = 0;
+	                    if (filmListToDelete.isEmpty()) {
+	                        System.out.println("Error: Film title not found!");
+	                        break;
+	                    }
+	                    
+	                    if (filmListToDelete.size() == 1) {
+	                        filmIdEFToDel = filmListToDelete.get(0).getFilmId();
+	                    } else {
+	                        for (int i = 0; i < filmListToDelete.size(); i++) {
+	                            System.out.println(filmListToDelete.get(i));
+	                        }
+	                        System.out.print("Select film ID: ");
+	                        filmIdEFToDel = scan.nextInt();
+	                        scan.nextLine();
+	                    }
+
+	                    boolean deletionSc = db.deleteEventFromFilm(eventIdToDelete, filmIdEFToDel);
+	                    if (deletionSc) {
+	                        System.out.println("Event unlinked from film successfully!");
+	                    } else {
+	                        System.out.println("Failed to unlink event from film.");
+	                    }
+	                    break;
+
+	                    
+	                    
+	                case 7:
 	                    System.out.println(db.showAllFilmsWithEvent());
 	                    break;
 	                    
-	                case 6:
+	                case 8:
 	                    return;
 
 	                default:
@@ -598,9 +903,25 @@ public class Menu {
 	            scan.nextLine(); 
 	            switch (choice) {
 	                case 1:
-	                    db.showAllCinemas();
-	                    System.out.print("Enter cinema ID: ");
-	                    int cinemaId = scan.nextInt();
+	                	db.showAllCinemas();
+	                	System.out.print("Enter cinema name: ");
+	                	String cinemaName = scan.nextLine();
+	                	List<Cinema> cinemas = db.findCinemaByName(cinemaName);
+	                	int cinemaId = 0;
+	                	if (cinemas.isEmpty()) {
+	                	    System.out.println("Error: Cinema name not found!");
+	                	    break;
+	                	}
+	                	if (cinemas.size() == 1) {
+	                	    cinemaId = cinemas.get(0).getCinemaId();
+	                	} else {
+	                	    for (int i = 0; i < cinemas.size(); i++) {
+	                	        System.out.println(cinemas.get(i));
+	                	    }
+	                	    System.out.print("Select cinema ID: ");
+	                	    cinemaId = scan.nextInt();
+	                	    scan.nextLine();
+	                	}
 	                    System.out.print("Enter hall number: ");
 	                    int hallNumber = scan.nextInt();
 	                    System.out.print("Enter hall capacity: ");
@@ -615,19 +936,60 @@ public class Menu {
 	                    break;
 
 	                case 2:
-	                	db.showAllHalls();
-	                	System.out.print("Enter the ID of the hall to update: ");
-	                	int hallId = scan.nextInt();
+	                	
+	                	System.out.println("\n--- Update Hall ---");
+
+	                	System.out.print("Enter the current hall capacity: ");
+	                	int currentCapacity = scan.nextInt();
+	                	scan.nextLine(); 
+
+	                	List<Hall> halls = db.findHallByCapacity(currentCapacity);
+
+	                	int hallId = 0;
+	                	if (halls.isEmpty()) {
+	                	    System.out.println("Error: Hall not found with this number and capacity!");
+	                	    break;
+	                	}
+
+	                	if (halls.size() == 1) {
+	                	    hallId = halls.get(0).getHallId();
+	                	} else {
+	                	    for (int i = 0; i < halls.size(); i++) {
+	                	        System.out.println(halls.get(i));
+	                	    }
+	                	    System.out.print("Select hall ID: ");
+	                	    hallId = scan.nextInt();
+	                	    scan.nextLine();
+	                	}
 
 	                	System.out.print("Enter new hall number: ");
 	                	int newHallNumber = scan.nextInt();
-
-	                	db.showAllCinemas();
-	                	System.out.print("Enter new cinema ID: ");
-	                	int newCinemaId = scan.nextInt();
+	                	scan.nextLine();
 
 	                	System.out.print("Enter new hall capacity: ");
 	                	int newCapacity = scan.nextInt();
+	                	scan.nextLine();
+	                	db.showAllCinemas();
+	                	System.out.print("Enter new cinema name: ");
+	                	String newCinemaName = scan.nextLine();
+	                	List<Cinema> newCinemas = db.findCinemaByName(newCinemaName);
+
+	                	int newCinemaId = 0;
+	                	if (newCinemas.isEmpty()) {
+	                	    System.out.println("Error: New cinema name not found!");
+	                	    break;
+	                	}
+
+	                	if (newCinemas.size() == 1) {
+	                	    newCinemaId = newCinemas.get(0).getCinemaId();
+	                	} else {
+	                	    for (int i = 0; i < newCinemas.size(); i++) {
+	                	        System.out.println(newCinemas.get(i));
+	                	    }
+	                	    System.out.print("Select new cinema ID: ");
+	                	    newCinemaId = scan.nextInt();
+	                	    scan.nextLine();
+	                	}
 
 	                	boolean isUpdated = db.updateHall(hallId, newHallNumber, newCinemaId, newCapacity);
 	                	if (isUpdated) {
@@ -635,24 +997,47 @@ public class Menu {
 	                	} else {
 	                	    System.out.println("Failed to update hall.");
 	                	}
-	                    break;
+	                	break;
+
 
 	                case 3:
-	                    db.showAllHalls();
+	                    db.showAllHallsWithCinemas();
 	                    break;
 
 	                case 4:
-	                    db.showAllHalls();
-	                    System.out.print("Enter the ID of the hall to delete: ");
-	                    int deleteHallId = scan.nextInt();
+	                    
+	                	System.out.println("\n--- Delete Hall ---");
 
-	                    boolean isDeleted = db.deleteHall(deleteHallId);
-	                    if (isDeleted) {
-	                        System.out.println("Hall deleted successfully!");
-	                    } else {
-	                        System.out.println("Failed to delete hall.");
-	                    }
-	                    break;
+	                	System.out.print("Enter the hall capacity: ");
+	                	int tHall = scan.nextInt();
+	                	List<Hall> mHalls = db.findHallByCapacity(tHall);
+
+	                	int tHallId = 0;
+	                	if (mHalls.isEmpty()) {
+	                	    System.out.println("Error: hall name not found!");
+	                	    break;
+	                	}
+
+	                	if (mHalls.size() == 1) {
+	                	    tHallId = mHalls.get(0).getCinemaId();
+	                	} else {
+	                	    for (int i = 0; i < mHalls.size(); i++) {
+	                	        System.out.println(mHalls.get(i));
+	                	    }
+	                	    System.out.print("Select hall ID: ");
+	                	    tHallId = scan.nextInt();
+	                	    scan.nextLine(); 
+	                	}
+
+	                	
+
+	                	boolean isDeleted = db.deleteHall(tHallId);
+	                	if (isDeleted) {
+	                	    System.out.println("Hall deleted successfully!");
+	                	} else {
+	                	    System.out.println("Failed to delete hall.");
+	                	}
+	                	break;
 
 	                case 5:
 	                    return;
@@ -994,22 +1379,45 @@ public class Menu {
 	                    System.out.println(isInserted ? "Special event added successfully!" : "Failed to add special event.");
 	                    break;
 
-	                case 2:
-	                    db.showAllSpecialEvents();
-	                    System.out.print("Enter special event ID to update: ");
-	                    int eventId = scan.nextInt();
+	                case 2: 
+	                    System.out.println("\n--- Update Special Event ---");
+//	                    db.showAllSpecialEvents();
+
+	                    System.out.print("Enter special event name: ");
+	                    String nameEvent = scan.nextLine();
+	                    List<SpecialEvent> events = db.findSpecialEventByName(nameEvent);
+
+	                    int eventIdToUpdate = 0;
+	                    if (events.isEmpty()) {
+	                        System.out.println("Error: Event name not found!");
+	                        break;
+	                    }
+	                    
+	                    if (events.size() == 1) {
+	                        eventIdToUpdate = events.get(0).getEventId();
+	                    } else {
+	                        for (int i = 0; i < events.size(); i++) {
+	                            System.out.println(events.get(i));
+	                        }
+	                        System.out.print("Select the event (ID): ");
+	                        eventIdToUpdate = scan.nextInt();
+	                        scan.nextLine();
+	                    }
 
 	                    System.out.print("Enter new event name: ");
-	                    String newEventName = scan.next();
+	                    String newEventName = scan.nextLine();
 
 	                    System.out.print("Enter new event date (YYYY-MM-DD): ");
-	                    String newEventDate = scan.next();
+	                    String newEventDate = scan.nextLine();
 
 	                    System.out.print("Enter new special prices: ");
-	                    String newSpecialPrices = scan.next();
-
-	                    boolean isUpdated = db.updateSpecialEvent(eventId, newEventName, newEventDate, newSpecialPrices);
-	                    System.out.println(isUpdated ? "Special event updated successfully!" : "Failed to update special event.");
+	                    double newSpecialPrices = Double.parseDouble(scan.next());
+	                    boolean isUpdated = db.updateSpecialEvent(eventIdToUpdate, newEventName, newEventDate, newSpecialPrices);
+	                    if (isUpdated) {
+	                        System.out.println("Special event updated successfully!");
+	                    } else {
+	                        System.out.println("Failed to update special event.");
+	                    }
 	                    break;
 
 	                case 3:
@@ -1017,13 +1425,39 @@ public class Menu {
 	                    break;
 
 	                case 4:
-	                    db.showAllSpecialEvents();
-	                    System.out.print("Enter special event ID to delete: ");
-	                    int deleteEventId = scan.nextInt();
+	                   
+	                	System.out.println("\n--- Delete Special Event ---");
+	                	db.showAllSpecialEvents();
 
-	                    boolean isDeleted = db.deleteSpecialEvent(deleteEventId);
-	                    System.out.println(isDeleted ? "Special event deleted successfully!" : "Failed to delete special event.");
-	                    break;
+	                	int eventIdToDelete = 0;
+	                	System.out.print("Enter special event name: ");
+	                	String nameEventDel = scan.nextLine();
+	                	List<SpecialEvent> eventsToDelete = db.findSpecialEventByName(nameEventDel);
+
+	                	if (eventsToDelete.isEmpty()) {
+	                	    System.out.println("Error: Event name not found!");
+	                	    break;
+	                	}
+
+	                	if (eventsToDelete.size() == 1) {
+	                	    eventIdToDelete = eventsToDelete.get(0).getEventId();
+	                	} else {
+	                	    for (SpecialEvent e : eventsToDelete) {
+	                	        System.out.println(e);
+	                	    }
+	                	    System.out.print("Select the event (ID): ");
+	                	    eventIdToDelete = scan.nextInt();
+	                	    scan.nextLine();
+	                	}
+
+	                	boolean isDeleted = db.deleteSpecialEvent(eventIdToDelete);
+	                	if (isDeleted) {
+	                	    System.out.println("Special event deleted successfully!");
+	                	} else {
+	                	    System.out.println("Failed to delete special event.");
+	                	}
+	                	break;
+
 
 	                case 5:
 	                    return;

@@ -4,9 +4,9 @@ public class SpecialEvent {
     private int eventId;
     private String name;
     private String date;
-    private String specialPrices;
+    private double specialPrices;
 
-    public SpecialEvent(int eventId, String name, String date, String specialPrices) {
+    public SpecialEvent(int eventId, String name, String date, double specialPrices) {
         this.eventId = eventId;
         this.name = name;
         this.date = date;
@@ -37,13 +37,14 @@ public class SpecialEvent {
         this.date = date;
     }
 
-    public String getSpecialPrices() {
-        return specialPrices;
-    }
+    
+	public double getSpecialPrices() {
+		return specialPrices;
+	}
 
-    public void setSpecialPrices(String specialPrices) {
-        this.specialPrices = specialPrices;
-    }
+	public void setSpecialPrices(double specialPrices) {
+		this.specialPrices = specialPrices;
+	}
 
 	@Override
 	public String toString() {

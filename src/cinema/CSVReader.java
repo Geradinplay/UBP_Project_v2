@@ -86,7 +86,6 @@ public class CSVReader {
                 String[] values = line.split(";");
                 String title = values[0].trim();
                 String genre = values[1].trim();
-                System.out.println(values[2].trim());
                 int duration = Integer.parseInt(values[2].trim());
                 String director = values[3].trim();
                 int studioId = Integer.parseInt(values[4].trim());
@@ -546,7 +545,7 @@ public class CSVReader {
 
                 String name = values[0].trim();
                 String date = values[1].trim();
-                String specialPrices = values[2].trim();
+                double specialPrices = Double.parseDouble(values[2].trim());
 
                 SpecialEvent event = new SpecialEvent(0, name, date, specialPrices);
                 events.add(event);
