@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -358,16 +359,37 @@ public class DataBaseConnection {
 	}
 	
 	public boolean deleteFilm(int filmId) {
-	    String sql = "DELETE FROM film WHERE film_id = ?";
-	    try (Connection conn = getNewConnection();
-	         PreparedStatement stmt = conn.prepareStatement(sql)) {
-	        stmt.setInt(1, filmId);
-	        return stmt.executeUpdate() > 0;
+	    String deleteEventFilmsSql = "DELETE FROM eventfilms WHERE film_id = ?";
+	    String deleteFilmSql = "DELETE FROM film WHERE film_id = ?";
+
+	    try (Connection conn = getNewConnection()) {
+	        conn.setAutoCommit(false); // Отключаем автокоммит для безопасного удаления(обе успешны или ни одна)
+
+	        try (PreparedStatement stmt1 = conn.prepareStatement(deleteEventFilmsSql);
+	             PreparedStatement stmt2 = conn.prepareStatement(deleteFilmSql)) {
+
+	            // Удаляем зависимые eventfilms
+	            stmt1.setInt(1, filmId);
+	            stmt1.executeUpdate();
+
+	            // Удаляем сам фильм
+	            stmt2.setInt(1, filmId);
+	            int affectedRows = stmt2.executeUpdate();
+
+	            conn.commit(); // Подтверждаем
+
+	            return affectedRows > 0;
+	        } catch (SQLException e) {
+	            conn.rollback(); // Откат
+	            e.printStackTrace();
+	            return false;
+	        }
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	        return false;
 	    }
 	}
+
 
 	public boolean insertHall(int hallNumber, int cinemaId, int capacity) {
 	    String sql = "INSERT INTO hall (hall_number, cinema_id, capacity) VALUES (?, ?, ?)";
@@ -551,6 +573,41 @@ public class DataBaseConnection {
 	    }
 	    return projections;
 	}
+	public List<Projection> showAllProjectionsWithFilmAndHallCapacity() {
+	    String sql = "SELECT p.projection_id, f.title, h.capacity, p.date, p.start_time, p.film_id, p.hall_id " +
+	                 "FROM projection p " +
+	                 "JOIN film f ON p.film_id = f.film_id " +
+	                 "JOIN hall h ON p.hall_id = h.hall_id";
+
+	    List<Projection> projections = new ArrayList<>();
+	    try (Connection conn = getNewConnection();
+	         Statement stmt = conn.createStatement();
+	         ResultSet rs = stmt.executeQuery(sql)) {
+
+	        while (rs.next()) {
+	            Projection projection = new Projection(
+	                rs.getInt("projection_id"),
+	                rs.getInt("film_id"),      
+	                rs.getInt("hall_id"),      
+	                String.valueOf(rs.getDate("date")),
+	                String.valueOf(rs.getTime("start_time"))
+	            );
+	            projections.add(projection);
+	            System.out.println(
+	            		"Projection id=" + projection.getProjectionId() +
+	                       ", Film=" + rs.getString("title") +
+	                       ", Capacity=" + rs.getString("capacity") +
+	                       ", Date=" + projection.getDate() +
+	                       ", StartTime=" + projection.getStartTime());
+	        }
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return projections;
+	}
+
+	
 	public List<Projection> showAllProjectionsWithFilmName() {
 	    String sql = "SELECT p.projection_id, f.title, f.genre, p.date, p.start_time, h.hall_id, f.film_id\r\n"
 	    		+ "FROM projection p, film f, hall h\r\n"
@@ -580,6 +637,73 @@ public class DataBaseConnection {
 	    }
 	    return projections;
 	}
+	
+	public void showAllDatesForFilm(int filmId) {
+	    String sql = "SELECT DISTINCT date FROM projection WHERE film_id = ? ORDER BY date ASC";
+
+	    try (Connection conn = getNewConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+	        stmt.setInt(1, filmId);
+	        ResultSet rs = stmt.executeQuery();
+
+	        System.out.println("Available projection dates for film ID " + filmId + ":");
+	        while (rs.next()) {
+	            System.out.println(rs.getString("date"));
+	        }
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+
+	public void showAllDates(int filmId) {
+	    String sql = "SELECT date FROM projection WHERE film_id = ?";
+
+	    try (Connection conn = getNewConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+	        stmt.setInt(1, filmId);
+	        ResultSet rs = stmt.executeQuery();
+
+	        while (rs.next()) {
+	            System.out.println(rs.getString("date"));
+	        }
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+	
+	public List<Projection> findProjectionByFilmAndDate(int filmId, String date) {
+	    List<Projection> projections = new ArrayList<>();
+	    String sql = "SELECT * FROM projection WHERE film_id = ? AND date = ?";
+
+	    try (Connection conn = getNewConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        
+	        stmt.setInt(1, filmId);
+	        stmt.setString(2, date);
+	        ResultSet rs = stmt.executeQuery();
+
+	        while (rs.next()) {
+	            Projection projection = new Projection(
+	                rs.getInt("projection_id"),
+	                rs.getInt("film_id"),
+	                rs.getInt("hall_id"),
+	                rs.getString("date"),
+	                rs.getString("start_time")
+	            );
+	            projections.add(projection);
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    return projections;
+	}
+
+	
 	public boolean updateProjection(int projectionId, int newFilmId, int newHallId, String newDate, String newStartTime) {
 	    String sql = "UPDATE projection SET film_id = ?, hall_id = ?, date = ?, start_time = ? WHERE projection_id = ?";
 	    try (Connection conn = getNewConnection();
@@ -595,17 +719,83 @@ public class DataBaseConnection {
 	        return false;
 	    }
 	}
-	public boolean deleteProjection(int projectionId) {
-	    String sql = "DELETE FROM projection WHERE projection_id = ?";
-	    try (Connection conn = getNewConnection();
+	public List<Projection>findProjectionByDate(String date){
+		String sql = "SELECT * FROM projection WHERE date = ?"; 
+	    List<Projection> projections = new ArrayList<>();
+	    
+	    try (Connection conn = getNewConnection(); 
 	         PreparedStatement stmt = conn.prepareStatement(sql)) {
-	        stmt.setInt(1, projectionId);
-	        return stmt.executeUpdate() > 0;
+	        
+	        stmt.setString(1, date);
+	        ResultSet rs = stmt.executeQuery();
+
+	        while (rs.next()) {
+	            Projection pr = new Projection(
+	                rs.getInt("projection_id"),
+	                rs.getInt("film_id"),
+	                rs.getInt("hall_id"),
+	                String.valueOf(rs.getDate("date")),
+	                String.valueOf(rs.getTime("start_time"))
+	            );
+	            projections.add(pr);
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    
+	    return projections;
+	}
+	public List<Projection>findProjectionByTime(String time){
+		String sql = "SELECT * FROM projection WHERE start_time = ?"; 
+	    List<Projection> projections = new ArrayList<>();
+	    
+	    try (Connection conn = getNewConnection(); 
+	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        
+	        stmt.setString(1, time);
+	        ResultSet rs = stmt.executeQuery();
+
+	        while (rs.next()) {
+	            Projection pr = new Projection(
+	                rs.getInt("projection_id"),
+	                rs.getInt("film_id"),
+	                rs.getInt("hall_id"),
+	                String.valueOf(rs.getDate("date")),
+	                String.valueOf(rs.getTime("start_time"))
+	            );
+	            projections.add(pr);
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    
+	    return projections;
+	}
+	public boolean deleteProjection(int projectionId) {
+	    String deleteTicketsSQL = "DELETE FROM ticket WHERE projection_id = ?";
+	    String deleteProjectionSQL = "DELETE FROM projection WHERE projection_id = ?";
+
+	    try (Connection conn = getNewConnection();
+	         PreparedStatement deleteTicketsStmt = conn.prepareStatement(deleteTicketsSQL);
+	         PreparedStatement deleteProjectionStmt = conn.prepareStatement(deleteProjectionSQL)) {
+
+	        conn.setAutoCommit(false); 
+
+	        deleteTicketsStmt.setInt(1, projectionId);
+	        deleteTicketsStmt.executeUpdate();
+
+	        deleteProjectionStmt.setInt(1, projectionId);
+	        int affectedRows = deleteProjectionStmt.executeUpdate();
+
+	        conn.commit(); 
+	        return affectedRows > 0;
+
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	        return false;
 	    }
 	}
+
 
 	public boolean insertTicket( int projectionId, String purchaseDate, int type, int customerId) {
 	    String sql = "INSERT INTO ticket (projection_id, purchase_date, type_id, customer_id) VALUES (?, ?, ?, ?)";
@@ -660,16 +850,58 @@ public class DataBaseConnection {
 	        }
 	     // Вывод содержимого списка tickets в консоль
 	        for (Ticket ticket: tickets) {
-	            System.out.println(ticket);
+	            System.out.print(ticket);
 	        }
 	        System.out.println();
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
 	    return tickets;
-	}	
+	}
+	
+	public List<Ticket> showAllTicketsWithFilmProjectionCustomer() {
+	    String sql = "SELECT t.ticket_id, t.purchase_date, f.title, p.date, p.start_time, ty.type_name, c.name " +
+	                 "FROM ticket t " +
+	                 "JOIN projection p ON t.projection_id = p.projection_id " +
+	                 "JOIN film f ON p.film_id = f.film_id " +
+	                 "JOIN type ty ON t.type_id = ty.type_id " +
+	                 "JOIN customer c ON t.customer_id = c.customer_id";
+
+	    List<Ticket> tickets = new ArrayList<>();
+
+	    try (Connection conn = getNewConnection();
+	         Statement stmt = conn.createStatement();
+	         ResultSet rs = stmt.executeQuery(sql)) {
+
+	        while (rs.next()) {
+	            int ticketId = rs.getInt("ticket_id");
+	            String purchaseDate = rs.getString("purchase_date");
+	            String filmTitle = rs.getString("title");
+	            String projectionDate = rs.getString("date");
+	            String startTime = rs.getString("start_time");
+	            String ticketType = rs.getString("type_name");
+	            String customerName = rs.getString("name");
+
+	            System.out.println(
+	            		"ticket id=" + ticketId +
+	                               ", purchase date=" + purchaseDate +
+	                               ", film=" + filmTitle +
+	                               ", projection date=" + projectionDate +
+	                               ", start time=" + startTime +
+	                               ", type=" + ticketType +
+	                               ", customer=" + customerName);
+	        }
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    return tickets;
+	}
+
+	
 	public boolean updateTicket(int ticketId, int newProjectionId, String newPurchaseDate, int newType, int newCustomerId) {
-	    String sql = "UPDATE ticket SET projection_id = ?, purchase_date = ?, type = ?, customer_id = ? WHERE ticket_id = ?";
+	    String sql = "UPDATE ticket SET projection_id = ?, purchase_date = ?, type_id = ?, customer_id = ? WHERE ticket_id = ?";
 	    try (Connection conn = getNewConnection();
 	         PreparedStatement stmt = conn.prepareStatement(sql)) {
 	        stmt.setInt(1, newProjectionId);
@@ -699,10 +931,14 @@ public class DataBaseConnection {
 	public boolean insertCustomer(String name, int bonus_points, int loyaltyProgramId) {
 	    String sql = "INSERT INTO customer (name, bonus_points, loyalty_program_id) VALUES (?, ?, ?)";
 	    try (Connection conn = getNewConnection();
-	         PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        PreparedStatement stmt = conn.prepareStatement(sql)) {
 	        stmt.setString(1, name);
 	        stmt.setInt(2, bonus_points);
-	        stmt.setInt(3, loyaltyProgramId);
+	        if (loyaltyProgramId!= -1) {
+	            stmt.setInt(3, loyaltyProgramId);
+	        } else {
+	        	stmt.setNull(3, Types.INTEGER);
+	        }
 	        return stmt.executeUpdate() > 0;
 	    } catch (SQLException e) {
 	        e.printStackTrace();
@@ -733,6 +969,46 @@ public class DataBaseConnection {
 	    }
 	    return customers;
 	}
+
+	public List<Customer> showAllCustomersWithDiscount() {
+	    String sql = "SELECT c.customer_id, c.name, c.bonus_points, lp.loyalty_program_id, lp.discount " +
+	                 "FROM customer c " +
+	                 "LEFT JOIN loyaltyprogram lp ON c.loyalty_program_id = lp.loyalty_program_id";
+	    //left join выберает даже тех у кого программа лояльности null
+	    List<Customer> customers = new ArrayList<>();
+	    
+	    try (Connection conn = getNewConnection();
+	         Statement stmt = conn.createStatement();
+	         ResultSet rs = stmt.executeQuery(sql)) {
+	         
+	        while (rs.next()) {
+	            int loyaltyProgramId = rs.getInt("loyalty_program_id"); 
+	            boolean hasLoyaltyProgram = !rs.wasNull(); 
+	            String discount = hasLoyaltyProgram ? rs.getDouble("discount") + "%" : "unset";
+
+	            Customer customer = new Customer(
+	                rs.getInt("customer_id"),
+	                rs.getString("name"),
+	                rs.getInt("bonus_points"),
+	                hasLoyaltyProgram ? loyaltyProgramId : -1 
+	            );
+	            
+	            System.out.println(
+	                "Customer ID=" + customer.getCustomerId() +
+	                ", Name=" + customer.getName() +
+	                ", Bonus Points=" + customer.getRewardPoints() +
+	                ", Discount=" + discount
+	            );
+	            
+	            customers.add(customer);
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return customers;
+	}
+
+	
 	public List<Customer> getAllCustomers() {
 	    String sql = "SELECT * FROM customer";
 	    List<Customer> customers = new ArrayList<>();
@@ -755,6 +1031,7 @@ public class DataBaseConnection {
 	}
 	public boolean updateCustomer(int customerId, String newName,int newRewardPoints, int newLoyaltyProgramId) {
 	    String sql = "UPDATE customer SET name = ?, bonus_points = ?, loyalty_program_id = ? WHERE customer_id = ?";
+	    
 	    try (Connection conn = getNewConnection();
 	         PreparedStatement stmt = conn.prepareStatement(sql)) {
 	        stmt.setString(1, newName);
@@ -1236,6 +1513,30 @@ public class DataBaseConnection {
 			return null;
 		}
 	}
+	public List<Customer> findCustomerByName(String name) {
+		   List<Customer> customers = new ArrayList<>();
+		    String sql = "SELECT * FROM customer WHERE name = ?";
+
+		    try (Connection conn = getNewConnection();
+		         PreparedStatement stmt = conn.prepareStatement(sql)) {
+		        stmt.setString(1, name);
+		        ResultSet rs = stmt.executeQuery();
+
+		        while (rs.next()) {
+		            Customer customer = new Customer(
+		                rs.getInt("customer_id"),
+		                rs.getString("name"),
+		                rs.getInt("bonus_points"),
+		                rs.getInt("loyalty_program_id")
+		            );
+		            customers.add(customer);
+		        }
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		    }
+		    return customers;
+	}
+	
 	public int insertCustomerReturnId(String name, int bonus_points, int loyaltyProgramId) {
 	    String sql = "INSERT INTO customer (name, bonus_points, loyalty_program_id) VALUES (?, ?, ?)";
 	    try (Connection conn = getNewConnection();
@@ -1311,6 +1612,38 @@ public class DataBaseConnection {
 		    }
 		    return list;
 	}
+	
+	public List<Projection> findProjectionsDate(String film) {
+		String sql="SELECT projection_id, p.film_id, hall_id, date, start_time\r\n"
+				+ "FROM projection p, film f\r\n"
+				+ "WHERE p.film_id=f.film_id\r\n"
+				+ "AND f.title="+"'"+film+"'";
+		List<Projection> list = new ArrayList<>();
+	    try (Connection conn = getNewConnection();
+		         Statement stmt = conn.createStatement();
+		         ResultSet rs = stmt.executeQuery(sql)) {
+		        while (rs.next()) {   	
+		         Projection projection = new Projection(
+		        		 rs.getInt("projection_id"), 
+		        		 rs.getInt("film_id"), 
+		        		 rs.getInt("hall_id"), 
+		        		 String.valueOf(rs.getDate("date")), 
+		        		 String.valueOf(rs.getTime("start_time")));
+		         list.add(projection);
+		        }
+		        // Вывод содержимого списка Projections сгруппировано в консоль
+		        int count=0;
+		        for (Projection l: list) {
+		        	count++;
+		        	System.out.print(count+") "+l.getDate()+"\n");
+		        }
+		        return list;
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		    }
+		    return list;
+	}
+	
 	public List<Type> getAllTypes(){
 		String sql ="SELECT *\r\n"
 				+ "FROM type";
@@ -1415,6 +1748,28 @@ public String showFullInfoFilms() {
 	    }
 	    return temp;
 }
+
+public String getFilmTitleById(int filmId) {
+    String sql = "SELECT title FROM film WHERE film_id = ?";
+    String filmTitle = "Unknown Film";
+
+    try (Connection conn = getNewConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setInt(1, filmId);
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            filmTitle = rs.getString("title");
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return filmTitle;
+}
+
 
 public List<Studio> showAllStudios() {
     String sql = "SELECT s.studio_id, s.name, h.headquarters_id, h.name as hName\r\n"
@@ -1536,7 +1891,7 @@ public List<Film> showAllFilmsWithStudioName() {
 
 
 public List<Hall> findHallByCapacity( int capacity) {
-    String sql = "SELECT * FROM hall WHERE capacity >= ?";
+    String sql = "SELECT * FROM hall WHERE capacity >= ? order by capacity";
     List<Hall> halls = new ArrayList<>();
 
     try (Connection conn = getNewConnection();
@@ -1561,5 +1916,298 @@ public List<Hall> findHallByCapacity( int capacity) {
     return halls;
 }
 
+public List<Ticket> findTicketsByCustomerId(int customerId) {
+    List<Ticket> tickets = new ArrayList<>();
+    String sql = "SELECT * FROM ticket WHERE customer_id = ?";
+
+    try (Connection conn = getNewConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setInt(1, customerId);
+        ResultSet rs = stmt.executeQuery();
+
+        while (rs.next()) {
+            Ticket ticket = new Ticket(
+                rs.getInt("ticket_id"),
+                rs.getInt("projection_id"),
+                rs.getString("purchase_date"),
+                rs.getInt("type_id"),
+                rs.getInt("customer_id")
+            );
+            tickets.add(ticket);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return tickets;
+}
+
+public List<Ticket> findTicketsByCustomerAndFilm(int customerId, int filmId) {
+    List<Ticket> tickets = new ArrayList<>();
+    String sql = "SELECT t.* FROM ticket t " +
+                 "JOIN projection p ON t.projection_id = p.projection_id " +
+                 "WHERE t.customer_id = ? AND p.film_id = ?";
+
+    try (Connection conn = getNewConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setInt(1, customerId);
+        stmt.setInt(2, filmId);
+        ResultSet rs = stmt.executeQuery();
+
+        while (rs.next()) {
+            Ticket ticket = new Ticket(
+                rs.getInt("ticket_id"),
+                rs.getInt("projection_id"),
+                rs.getString("purchase_date"),
+                rs.getInt("type_id"),
+                rs.getInt("customer_id")
+            );
+            tickets.add(ticket);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return tickets;
+}
+
+public void showAllFilmTitles() {
+    String sql = "SELECT title FROM film";
+
+    try (Connection conn = getNewConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+
+        System.out.println("\n--- List of Film Titles ---");
+        while (rs.next()) {
+            String filmTitle = rs.getString("title");
+            System.out.println(filmTitle);
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+//REPO ZONE
+public void showAllFilmsByGroupedDate() {
+    String sql = "SELECT DISTINCT f.title, p.date " +
+                 "FROM projection p " +
+                 "JOIN film f ON p.film_id = f.film_id " +
+                 "ORDER BY p.date ASC";
+
+    try (Connection conn = getNewConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+
+        System.out.println("\n--- Films by Date ---");
+        String currentDate = "";
+
+        while (rs.next()) {
+            String filmTitle = rs.getString("title");
+            String filmDate = rs.getString("date");
+
+            if (!filmDate.equals(currentDate)) {
+                currentDate = filmDate;
+                System.out.println("\n📅 Date: " + currentDate);
+            }
+
+            System.out.println("🎬 " + filmTitle);
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+
+public List<Hall> findHallByCapacityWithCinema(int capacity) {
+    String sql = "SELECT h.hall_id, h.hall_number, h.capacity, c.name AS cinema_name " +
+                 "FROM hall h " +
+                 "JOIN cinema c ON h.cinema_id = c.cinema_id " +
+                 "WHERE h.capacity >= ? " +
+                 "ORDER BY h.capacity";
+
+    List<Hall> halls = new ArrayList<>();
+
+    try (Connection conn = getNewConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setInt(1, capacity);
+        ResultSet rs = stmt.executeQuery();
+
+        while (rs.next()) {
+            int hallId = rs.getInt("hall_id");
+            int hallNumber = rs.getInt("hall_number");
+            int hallCapacity = rs.getInt("capacity");
+            String cinemaName = rs.getString("cinema_name");
+
+            Hall hall = new Hall(hallId, hallNumber, 0, hallCapacity); 
+            halls.add(hall);
+
+            System.out.println(
+                " |🔢  Hall Number: " + hallNumber +
+                " |📦 Capacity: " + hallCapacity +
+                " |📽️ Cinema: " + cinemaName
+            );
+        }
+
+        if (halls.isEmpty()) {
+            System.out.println("No halls found with capacity ≥ " + capacity);
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return halls;
+}
+
+public void showCustomerCountByLoyaltyProgram() {
+    String sql = "SELECT lp.loyalty_program_id, lp.discount, COUNT(c.customer_id) AS customer_count " +
+                 "FROM loyaltyprogram lp " +
+                 "LEFT JOIN customer c ON lp.loyalty_program_id = c.loyalty_program_id " +
+                 "GROUP BY lp.loyalty_program_id, lp.discount " +
+                 "ORDER BY customer_count DESC";
+
+    try (Connection conn = getNewConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+
+        System.out.println("\nLoyalty Program | Discount | Customers Count");
+        System.out.println("-------------------------------------------");
+
+        while (rs.next()) {
+            int loyaltyProgramId = rs.getInt("loyalty_program_id");
+            double discount = rs.getDouble("discount");
+            int customerCount = rs.getInt("customer_count");
+
+            System.out.println(loyaltyProgramId + "\t\t|" + discount + "%\t   |" + customerCount);
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+
+public void showTicketCountByType() {
+    String sql = "SELECT t.type_id, tp.type_name, COUNT(t.ticket_id) AS ticket_count " +
+                 "FROM ticket t " +
+                 "JOIN type tp ON t.type_id = tp.type_id " +
+                 "GROUP BY t.type_id, tp.type_name " +
+                 "ORDER BY ticket_count DESC";
+
+    try (Connection conn = getNewConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+
+        while (rs.next()) {
+            String typeName = rs.getString("type_name");
+            int ticketCount = rs.getInt("ticket_count");
+
+            System.out.println(typeName + " | " + ticketCount);
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+
+public void showFilmsByDate(String date) {
+    String sql = "SELECT DISTINCT f.title " +
+                 "FROM projection p " +
+                 "JOIN film f ON p.film_id = f.film_id " +
+                 "WHERE p.date = ?";
+
+    try (Connection conn = getNewConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setString(1, date);
+        ResultSet rs = stmt.executeQuery();
+
+        System.out.println("\n🎬 Films on " + date + ":");
+
+        boolean found = false;
+        while (rs.next()) {
+            String filmTitle = rs.getString("title");
+            System.out.println("- " + filmTitle);
+            found = true;
+        }
+
+        if (!found) {
+            System.out.println("No films found for this date.");
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+
+public void showHallsByCinema(String cinemaName) {
+    String sql = "SELECT h.hall_id, h.hall_number, h.capacity " +
+                 "FROM hall h " +
+                 "JOIN cinema c ON h.cinema_id = c.cinema_id " +
+                 "WHERE c.name = ?";
+
+    try (Connection conn = getNewConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setString(1, cinemaName);
+        ResultSet rs = stmt.executeQuery();
+
+        System.out.println("\nHalls in " + cinemaName + ":");
+
+        boolean found = false;
+        while (rs.next()) {
+            int hallId = rs.getInt("hall_id");
+            int hallNumber = rs.getInt("hall_number");
+            int capacity = rs.getInt("capacity");
+
+            System.out.println("Hall id: " + hallId +
+                               " | Hall Number: " + hallNumber +
+                               " | Capacity: " + capacity);
+            found = true;
+        }
+
+        if (!found) {
+            System.out.println("No halls found for this cinema.");
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+
+public void showStudiosByHeadquarters(String headquartersName) {
+    String sql = "SELECT s.studio_id, s.name " +
+                 "FROM studio s " +
+                 "JOIN headquarters h ON s.headquarters_id = h.headquarters_id " +
+                 "WHERE h.name = ?";
+
+    try (Connection conn = getNewConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setString(1, headquartersName);
+        ResultSet rs = stmt.executeQuery();
+
+        System.out.println("\nStudios under " + headquartersName + ":");
+
+        boolean found = false;
+        while (rs.next()) {
+            int studioId = rs.getInt("studio_id");
+            String studioName = rs.getString("name");
+
+            System.out.println("📽️Studio id: " + studioId + " | 📅Studio Name: " + studioName);
+            found = true;
+        }
+
+        if (!found) {
+            System.out.println("No studios found for this headquarters.");
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
 
 }

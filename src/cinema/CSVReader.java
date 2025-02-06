@@ -227,7 +227,7 @@ public class CSVReader {
             if (!customers.isEmpty()) {
                 System.err.println("Attention! This list displays customer whose loyalty_program_id was not found in the database, which led to their exclusion from the queue for additions.");
                 for (Customer l : customers) {
-                    System.out.print(l.toString());
+                    System.out.println(l.toString());
                 }
             }
             System.out.println("");
